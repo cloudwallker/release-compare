@@ -2,7 +2,7 @@
 
 ### Before-and-after release GIFs from paired screenshots
 
-**Show what changed in your next release. Add old and new screenshots, choose a comparison template, and export a GIF for your README or release notes. Save the project to reuse your scenes and settings next time.**
+**Show what changed in your next release. Arrange before-and-after screenshots in pairs, choose a comparison template, and export a GIF for your README or release notes. Save the project to reuse your scenes and settings next time.**
 
 English | [中文](README_ZH.md)
 
@@ -51,7 +51,7 @@ Preview and export use the same Canvas renderer and template logic. GIF export f
 ## Usage
 
 1. Set the project title and old/new version names.
-2. Replace each scene's before and after screenshot, or add a scene. Choose static PNG, JPEG or WebP images.
+2. Replace each scene's before and after screenshot, or add a scene. Choose static PNG, JPEG or WebP images. If an image is on the wrong side, **Swap screenshots** exchanges the two images in that scene. It also works with a single image.
 3. Name the scene and describe its change. Move scenes up or down to set the sequence.
 4. Choose a template. For Focus, adjust the X, Y, width and height sliders to choose a shared normalized region.
 5. Scrub the timeline or play the preview. Set output width, frame rate and seconds per scene.
@@ -59,7 +59,7 @@ Preview and export use the same Canvas renderer and template logic. GIF export f
 
 **Save project** downloads a versioned JSON file containing screenshots, text and settings. **Import project** restores it. **Export PNG** downloads the currently selected preview frame. Your current project stays in browser memory. Download its JSON file to continue after a page refresh.
 
-Changing content or settings clears the previous GIF download. Export uses a fixed project snapshot, with editing paused while it encodes. A failed import preserves the current project.
+Changing content or settings clears the previous GIF download. If a replacement screenshot fails to load, the existing pair and GIF download remain available. Export uses a fixed project snapshot, with editing paused while it encodes. A failed import preserves the current project.
 
 The included Planly screens are fictional fixtures drawn by this project, useful for trying the complete workflow.
 

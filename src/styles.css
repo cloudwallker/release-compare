@@ -142,7 +142,7 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border: 3px sol
 .upload-target strong { font-size: 11px; font-weight: 550; color: #d2def2; }
 .upload-target small { font-size: 10px; color: #a6b8d4; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .image-dimensions { font-size: 10px; color: #94a9c9; text-align: right; margin-top: 7px; font-variant-numeric: tabular-nums; }
-.upload-hint { margin-top: -5px; }
+.upload-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .form-fields:disabled .upload-target { opacity: .55; cursor: default; }
 .setting-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .setting-pair .field > span:first-child { font-size: 11px; }
