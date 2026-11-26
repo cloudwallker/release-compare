@@ -173,6 +173,10 @@ export default function App() {
     try { downloadBlob(new Blob([serializeProject(projectRef.current)], { type: 'application/json' }), `${filename(projectRef.current.title)}.release-compare.json`); }
     catch (failure) { setError(failure); }
   }
+  function swapScreenshots() {
+    if (pendingImagesRef.current > 0) return;
+    editScene({ before: scene.after, after: scene.before });
+  }
   async function replaceImage(event: ChangeEvent<HTMLInputElement>, side: 'before' | 'after') {
     const file = event.currentTarget.files?.[0]; event.currentTarget.value = '';
     if (!file || operationRef.current !== 'idle') return;
@@ -180,7 +184,7 @@ export default function App() {
     const generation = (imageRequests.current.get(key) ?? 0) + 1;
     imageRequests.current.set(key, generation);
     pendingImagesRef.current += 1; setPendingImages(pendingImagesRef.current);
-    invalidateResult(); setError(null);
+    setError(null);
     try {
       const asset = await readImage(file);
       if (!alive.current || epoch !== projectEpoch.current || imageRequests.current.get(key) !== generation) return;
@@ -295,7 +299,10 @@ export default function App() {
             {project.template === 'zoom' && <div className="focus-grid">{focusControls.map((control) => <label key={control.key} className="focus-control"><span>{control.label}<output>{Math.round(scene.focus[control.key] * 100)}%</output></span><input type="range" aria-label={control.label} min={control.min} max={Number(control.max.toFixed(2))} step="0.01" value={scene.focus[control.key]} onChange={(event) => editScene({ focus: normalizeFocus({ ...scene.focus, [control.key]: Number(event.currentTarget.value) }) })} /></label>)}</div>}
           </fieldset>
           <section className="scene-editor panel"><div className="panel-title"><h2>{t.sceneEditor}</h2><span className="count-badge">{String(sceneIndex + 1).padStart(2, '0')}</span></div><fieldset disabled={frozen} className="form-fields"><label className="field"><span>{t.sceneTitle}</span><input aria-label={t.sceneTitle} maxLength={120} value={scene.title} onChange={(event) => editScene({ title: event.currentTarget.value })} /></label><label className="field"><span>{t.caption}</span><textarea aria-label={t.caption} maxLength={500} value={scene.caption} rows={2} onChange={(event) => editScene({ caption: event.currentTarget.value })} /><span className="field-help character-count">{scene.caption.length} / 500</span></label>
-            <div className="upload-grid">{(['before', 'after'] as const).map((side) => <div className={`upload-card ${side}`} key={side}><div className="upload-heading"><span className="version-dot" />{side === 'before' ? t.beforeUpload : t.afterUpload}</div><label className="upload-target"><Icon name={scene[side] ? 'image' : 'upload'} /><span><strong>{t.chooseImage}</strong><small>{scene[side]?.name || t.emptyImage}</small></span><input type="file" accept="image/png,image/jpeg,image/webp" className="file-input" aria-label={side === 'before' ? t.beforeUpload : t.afterUpload} onChange={(event) => replaceImage(event, side)} /></label>{scene[side] && <p className="image-dimensions">{scene[side].width} × {scene[side].height}</p>}</div>)}</div><p className="field-help upload-hint">{t.imageHint}</p>
+            <div className="upload-grid">{(['before', 'after'] as const).map((side) => <div className={`upload-card ${side}`} key={side}><div className="upload-heading"><span className="version-dot" />{side === 'before' ? t.beforeUpload : t.afterUpload}</div><label className="upload-target"><Icon name={scene[side] ? 'image' : 'upload'} /><span><strong>{t.chooseImage}</strong><small>{scene[side]?.name || t.emptyImage}</small></span><input type="file" accept="image/png,image/jpeg,image/webp" className="file-input" aria-label={side === 'before' ? t.beforeUpload : t.afterUpload} onChange={(event) => replaceImage(event, side)} /></label>{scene[side] && <p className="image-dimensions">{scene[side].width} × {scene[side].height}</p>}</div>)}</div>
+            <div className="upload-actions"><p className="field-help">{t.imageHint}</p>
+              <button type="button" className="button" disabled={pendingImages > 0 || (!scene.before && !scene.after)} onClick={swapScreenshots}>{t.swapScreenshots}</button>
+            </div>
           </fieldset></section>
         </section>
         <aside className="settings-column" aria-label={t.output}>

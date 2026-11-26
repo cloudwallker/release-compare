@@ -84,6 +84,34 @@ test('replaces one screenshot and preserves its pair in saved JSON', async ({ pa
   expect(saved.scenes[0].after.dataUrl).toBe(before.scenes[0].after.dataUrl);
 });
 
+test('swaps just the selected pair and moves a single screenshot to the other side', async ({ page }) => {
+  const original = await saveProject(page);
+  const swap = page.getByRole('button', { name: '交换新旧截图', exact: true });
+  const preview = page.getByRole('img', { name: '版本对照预览' });
+  const previewData = () => preview.evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL());
+  await expect(page.getByRole('button', { name: '生成 GIF', exact: true })).toBeEnabled();
+  const firstFrame = await previewData();
+  await swap.click();
+  await expect.poll(previewData).not.toBe(firstFrame);
+  const updated = await saveProject(page);
+  const [first, ...remaining] = original.scenes;
+  expect(updated).toEqual({ ...original, scenes: [{ ...first, before: first.after, after: first.before }, ...remaining] });
+  await swap.click();
+  await expect.poll(previewData).toBe(firstFrame);
+
+  await page.getByRole('button', { name: '添加场景', exact: true }).click();
+  await expect(swap).toBeDisabled();
+  const png = Buffer.from(first.before.dataUrl.split(',')[1], 'base64');
+  await page.getByLabel('旧版截图', { exact: true }).setInputFiles({ name: 'single.png', mimeType: 'image/png', buffer: png });
+  await expect(swap).toBeEnabled();
+  await swap.click();
+  const single = (await saveProject(page)).scenes.at(-1);
+  expect(single.before).toBeUndefined();
+  expect(single.after.dataUrl).toBe(first.before.dataUrl);
+  await page.getByRole('button', { name: 'English', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Swap screenshots', exact: true })).toBeEnabled();
+});
+
 // Late reads must target their original scene, and a newer choice must win on the same side.
 test('keeps delayed screenshot reads scoped to their scene and latest choice', async ({ page }) => {
   await page.addInitScript(() => {
@@ -99,6 +127,7 @@ test('keeps delayed screenshot reads scoped to their scene and latest choice', a
   await page.getByLabel('旧版截图', { exact: true }).setInputFiles({ name: 'slow.png', mimeType: 'image/png', buffer: png });
   await expect(page.getByRole('button', { name: '生成 GIF', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: '导入项目', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: '交换新旧截图', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: /^选择场景 2：/ }).click();
   await expect(page.getByRole('button', { name: '保存项目', exact: true })).toBeEnabled();
   const switched = await saveProject(page);
@@ -163,11 +192,28 @@ test('generates a real GIF and invalidates the download after editing', async ({
   await page.getByRole('button', { name: '生成 GIF', exact: true }).click();
   const link = page.getByRole('link', { name: '下载 GIF', exact: true });
   await expect(link).toBeVisible({ timeout: 60000 });
+  const originalUrl = await link.getAttribute('href');
+  await page.getByLabel('旧版截图', { exact: true }).setInputFiles({
+    name: 'broken.png', mimeType: 'image/png', buffer: Buffer.from('not a PNG'),
+  });
+  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(link).toHaveAttribute('href', originalUrl!);
+
   const pending = page.waitForEvent('download');
   await link.click();
   const bytes = await downloadBytes(await pending);
   expect(bytes.subarray(0, 3).toString()).toBe('GIF');
   expect(bytes.readUInt16LE(6)).toBe(480);
+
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aP6sAAAAASUVORK5CYII=', 'base64');
+  await page.getByLabel('旧版截图', { exact: true }).setInputFiles({
+    name: 'corrected.png', mimeType: 'image/png', buffer: png,
+  });
+  await expect(page.getByText('corrected.png', { exact: true })).toBeVisible();
+  await expect(link).toHaveCount(0);
+
+  await page.getByRole('button', { name: '生成 GIF', exact: true }).click();
+  await expect(link).toBeVisible({ timeout: 60000 });
   await page.getByLabel('新版本名称', { exact: true }).fill('v3.0');
   await expect(link).toHaveCount(0);
 });
